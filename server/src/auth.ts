@@ -33,7 +33,7 @@ export const createAccessToken = (user: User) => {
     return sign(
         { 
             userId: user.id,
-            sub: user.email,
+            sub: user.email
         },
         process.env.ACCESS_SECRET!,
         {
@@ -47,6 +47,7 @@ export const createRefreshToken = (user: User) => {
         { 
             userId: user.id,
             sub: user.email,
+            tokenVersion: user.tokenVersion
         },
         process.env.REFRESH_SECRET!,
         {

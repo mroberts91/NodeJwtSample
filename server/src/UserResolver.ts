@@ -3,6 +3,8 @@ import {User} from "./entity/User";
 import { LoginResponse } from './LoginResponse';
 import { RequestContext } from './RequestContext';
 import { createRefreshToken, createAccessToken, hashString, isValidUserPassword, isUserAuthenticated } from './auth';
+import { sendRefreshTokenCookie } from './responseCookies';
+import { userListAsync, findUserByEmailAsync, addUserAsync } from './repository/userRepository';
 
 @Resolver()
 export class UserResolver{
@@ -12,8 +14,8 @@ export class UserResolver{
     }
 
     @Query(() => [User])
-    users(){
-        return User.find();
+    async users(){
+        return await userListAsync();
     }
 
     @Query(() => String)
@@ -21,7 +23,6 @@ export class UserResolver{
     checkAuth(
         @Ctx() { payload } : RequestContext
     ): string{
-        console.log(payload);
         return `You are authenticated ${payload!.sub}`;
     }
 
@@ -31,19 +32,15 @@ export class UserResolver{
         @Arg('password') password: string,
         @Ctx() { res }: RequestContext
     ): Promise<LoginResponse> {
-        const user = await User.findOne({ where: {email} });
+        const user = await findUserByEmailAsync(email);
 
-        if (!user) {
-            console.log(`Invalid login attempt for ${email}`)
+        if (!user) 
             throw new Error('Incorrect email or password');
-        }
 
-        if (!isValidUserPassword(user, password)) {
-            console.log(`Invalid login password attempt for ${email}`)
+        if (!isValidUserPassword(user, password)) 
             throw new Error('Incorrect email or password');
-        }
 
-        res.cookie("refid", createRefreshToken(user),{ httpOnly: true });
+        sendRefreshTokenCookie(res, createRefreshToken(user));
 
         return {
             accessToken: createAccessToken(user)
@@ -57,11 +54,7 @@ export class UserResolver{
     ){
         const hashedPassword = await hashString(password);
         try {
-            await User.insert({
-                email,
-                password: hashedPassword
-            });
-            
+            await addUserAsync(email, hashedPassword );
         } catch (error) {
             console.log(error);
             return false;

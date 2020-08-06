@@ -7,8 +7,9 @@ import { UserResolver } from "./UserResolver";
 import { createConnection } from "typeorm";
 import cookieParser from 'cookie-parser';
 import { verify } from 'jsonwebtoken';
-import { User } from './entity/User';
-import { createAccessToken } from './auth';
+import { createAccessToken, createRefreshToken } from './auth';
+import { sendRefreshTokenCookie } from './responseCookies';
+import { findUserByIdAsync, incrementUserTokenVersionAsync } from './repository/userRepository';
 
 
 
@@ -38,12 +39,14 @@ import { createAccessToken } from './auth';
             return res.send({ accessToken: ''});
         }
 
-        const user = await User.findOne({ id: payload.userId });
+        const user = await findUserByIdAsync(payload.userId );
 
         if (!user){
             res.status(404)
             return res.send({ accessToken: ''});
         }
+
+        sendRefreshTokenCookie(res, createRefreshToken(user));
 
         res.status(200);
         return res.send({ accessToken: createAccessToken(user) });
