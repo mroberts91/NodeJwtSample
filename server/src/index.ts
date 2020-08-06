@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 import { verify } from 'jsonwebtoken';
 import { createAccessToken, createRefreshToken } from './auth';
 import { sendRefreshTokenCookie } from './responseCookies';
-import { findUserByIdAsync, incrementUserTokenVersionAsync } from './repository/userRepository';
+import { findUserByIdAsync } from './repository/userRepository';
 
 
 
